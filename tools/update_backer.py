@@ -7,7 +7,7 @@ import logging
 from pathlib import Path
 
 import requests
-from ruamel.yaml import YAML  # pip install ruamel.yaml
+from ruamel.yaml import YAML  # uv add ruamel.yaml
 
 logger = logging.getLogger()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

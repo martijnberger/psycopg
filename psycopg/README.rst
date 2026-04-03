@@ -22,8 +22,7 @@ Installation
 
 In short, run the following::
 
-    pip install --upgrade pip           # to upgrade pip
-    pip install "psycopg[binary,pool]"  # to install package and dependencies
+    uv add "psycopg[binary,pool]"
 
 If something goes wrong, and for more information about installation, please
 check out the `Installation documentation`__.

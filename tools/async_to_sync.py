@@ -179,7 +179,10 @@ FROM python:{PYVER}
 WORKDIR /src
 
 ADD psycopg psycopg
-RUN pip install ./psycopg[dev]
+ADD https://astral.sh/uv/install.sh /tmp/uv-installer.sh
+RUN sh /tmp/uv-installer.sh
+ENV PATH="/root/.local/bin:$PATH"
+RUN uv pip install --system ./psycopg[dev]
 
 ENTRYPOINT ["tools/async_to_sync.py"]
 """

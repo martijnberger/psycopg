@@ -10,7 +10,7 @@ contains the optional optimization package `psycopg_c`__.
 
 You shouldn't install this package directly: use instead ::
 
-    pip install "psycopg[c]"
+    uv add "psycopg[c]"
 
 to install a version of the optimization package matching the ``psycopg``
 version installed.
