@@ -69,6 +69,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Setup PG
         env:
           PGPASSWORD: password
@@ -86,7 +90,7 @@ jobs:
           echo "DEPS=$DEPS ./psycopg_c" >> $GITHUB_ENV
 
       - name: Install pycopg packages
-        run: pip install $DEPS
+        run: uv pip install --system $DEPS
 
       - name: Setup and install sqlalchemy
         run: |
@@ -106,7 +110,7 @@ jobs:
           esac
           mv sa_home/$( ls sa_home ) sa_home/sa
           cd sa_home/sa
-          pip install .
+          uv pip install --system .
 
       - name: Run sqlalchemy tests
         env:
@@ -185,6 +189,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Setup PG
         env:
           PGPASSWORD: password
@@ -199,7 +207,7 @@ jobs:
           echo "DEPS=$DEPS ./psycopg_c" >> $GITHUB_ENV
 
       - name: Install pycopg packages
-        run: pip install $DEPS
+        run: uv pip install --system $DEPS
 
       - name: Download and configure Django
         run: |
@@ -245,13 +253,6 @@ jobs:
           USE_TZ = False
           HERE
 
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/pip
-          key: ${{ matrix.python-version }}-pip-${{ hashFiles('workdir/django/tests/requirements/py3.txt', 'workdir/django/setup.cfg') }}
-          restore-keys: |
-            ${{ matrix.python-version }}-pip-
-
       - name: Install Django and dependencies
         working-directory: workdir/django
         run: |
@@ -261,8 +262,8 @@ jobs:
           # https://github.com/django/django/blob/main/tests/requirements/py3.txt#L12
           # (You can check the above in case it gets dropped in the future).
           sudo apt-get install -y libmemcached-dev
-          pip install .
-          pip install -r tests/requirements/py3.txt
+          uv pip install --system .
+          uv pip install --system -r tests/requirements/py3.txt
 
       - name: Run Django tests
         working-directory: workdir/django/tests

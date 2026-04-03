@@ -9,7 +9,7 @@ Installation
 
 Quick version::
 
-    pip install "psycopg[binary,pool]"
+    uv add "psycopg[binary,pool]"
 
 For further information about installation please check `the documentation`__.
 
@@ -59,40 +59,35 @@ packages, which may have different requirements:
 .. __: https://www.psycopg.org/psycopg3/docs/basic/install.html#local-installation
 .. __: https://www.psycopg.org/psycopg3/docs/advanced/pool.html
 
-You can create a local virtualenv and install the packages `in
-development mode`__, together with their development and testing
-requirements::
+You can sync a local development environment with `uv`__. The workspace will
+install ``psycopg``, ``psycopg_pool``, and ``isort-psycopg`` in editable mode,
+along with the development and testing dependencies::
 
-    python -m venv .venv
-    source .venv/bin/activate
+    uv sync
 
-    # Install the base Psycopg package in editable mode
-    pip install --config-settings editable_mode=strict -e "./psycopg[dev,test]"
+If you are working on the C speedup package too, sync the ``c`` group as well.
+This will build the Cython extension through the package's existing build
+backend::
 
-    # Install the connection pool package in editable mode
-    pip install --config-settings editable_mode=strict -e ./psycopg_pool
+    uv sync --group c
 
-    # Install the C speedup extension
-    pip install ./psycopg_c
+If you are working on the documentation, add the ``docs`` group::
 
-.. __: https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs
+    uv sync --group docs
 
-The ``--config-settings editable_mode=strict`` will be probably required
-to work around the problem of the `editable mode broken`__.
-
-.. __: https://github.com/pypa/setuptools/issues/3557
+.. __: https://docs.astral.sh/uv/
 
 Now hack away! You can run the tests using::
 
     psql -c 'create database psycopg_test'
     export PSYCOPG_TEST_DSN="dbname=psycopg_test"
-    pytest
+    uv run pytest
 
 The project includes some `pre-commit`__ hooks to check that the code is valid
 according to the project coding convention. Please make sure to install them
 by running::
 
-    pre-commit install
+    uv run pre-commit install
 
 This will allow to check lint errors before submitting merge requests, which
 will save you time and frustrations.

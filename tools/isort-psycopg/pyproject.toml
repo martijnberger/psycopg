@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "isort-psycopg"
 description = "isort plug-in to sort imports by module length first"
 # Note: to release a new version:
-# python -m build -o dist --wheel .
+# uv build --wheel --out-dir dist .
 # twine upload dist/isort_psycopg-*-py3-none-any.whl
 version = "0.0.2"
 

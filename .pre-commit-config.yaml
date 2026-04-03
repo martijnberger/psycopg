@@ -1,7 +1,7 @@
 # See https://pre-commit.com for more information
 #
 # Note: we use `language: system` to make sure that pre-commit uses the same
-# dependencies installed by `pip install psycopg[dev]` and not some random
+# dependencies installed by `uv sync` and not some random
 # version installed in a hidden virtualenv. This way running the tools via
 # pre-commit should give the same result of running them manually.
 #
@@ -19,7 +19,7 @@ repos:
       - id: black
         name: black
         language: system
-        entry: black --check --diff --color --quiet
+        entry: black --check --diff --color --quiet --fast
         files: \.py[i]?$
         exclude: tests/test_tstring.py
 
@@ -38,7 +38,8 @@ repos:
       - id: mypy
         name: mypy
         language: system
-        entry: mypy --pretty --follow-imports=silent
+        entry: mypy --pretty --follow-imports=silent --platform linux
+        pass_filenames: false
         files: \.py[i]?$
         exclude: tests/test_tstring.py
 

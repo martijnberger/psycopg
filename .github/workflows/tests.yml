@@ -77,6 +77,10 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
 
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Start PostgreSQL service
         # Note: this would love to be a service, but I don't see a way to pass
         # the args to the docker run command line.
@@ -126,7 +130,7 @@ jobs:
         if: ${{ matrix.ext == 'min' }}
         run: |
           echo "DEPS=$DEPS dnspython shapely numpy gevent" >> $GITHUB_ENV
-          echo "PIP_CONSTRAINT=${{ github.workspace }}/tests/constraints.txt" \
+          echo "UV_CONSTRAINT=${{ github.workspace }}/tests/constraints.txt" \
             >> $GITHUB_ENV
 
       - name: Configure memory alignment tests
@@ -138,7 +142,7 @@ jobs:
           echo "PYTEST_ADDOPTS=-v" >> $GITHUB_ENV
 
       - name: Install Python packages
-        run: pip install $DEPS
+        run: uv pip install --system $DEPS
 
       - name: Run tests
         run: ./tools/ci/ci_test.sh
@@ -170,6 +174,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Start PostgreSQL service
         # Note: this would love to be a service, but I don't see a way to pass
         # the args to the docker run command line.
@@ -180,7 +188,7 @@ jobs:
             -c max_prepared_transactions=10
 
       - name: Install Python packages
-        run: pip install $DEPS
+        run: uv pip install --system $DEPS
 
       - name: Run tests
         run: ./tools/ci/ci_test.sh
@@ -225,6 +233,10 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
 
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Install PostgreSQL on the runner
         run: brew install postgresql@${PG_VERSION}
 
@@ -247,7 +259,7 @@ jobs:
           echo "PATH=/opt/homebrew/opt/postgresql@${PG_VERSION}/bin:$PATH" >> $GITHUB_ENV
 
       - name: Install Python packages
-        run: pip install $DEPS
+        run: uv pip install --system $DEPS
 
       - name: Run tests
         run: ./tools/ci/ci_test.sh
@@ -297,6 +309,10 @@ jobs:
           python-version: ${{ matrix.python }}
           allow-prereleases: true
 
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Start PostgreSQL service
         run: |
           $PgSvc = Get-Service "postgresql*"
@@ -336,13 +352,13 @@ jobs:
         run: |
           # If the wheel is not delocated, import fails with some dll not found
           # (but it won't tell which one).
-          pip wheel -v -w ./psycopg_c/dist/ ./psycopg_c/
+          uv build --wheel --out-dir ./psycopg_c/dist/ ./psycopg_c
           delvewheel repair --no-mangle "libiconv-2.dll;libwinpthread-1.dll" \
             -w ./wheelhouse/ psycopg_c/dist/psycopg*.whl
           echo "DEPS=$DEPS $(ls ./wheelhouse/*.whl)" >> $GITHUB_ENV
 
       - name: Install Python packages
-        run: pip install $DEPS
+        run: uv pip install --system $DEPS
 
       - name: Run tests
         run: ./tools/ci/ci_test.sh
@@ -388,6 +404,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
       - name: Start CockroachDB service
         # Note: this would love to be a service, but I don't see a way to pass
         # the args to the docker run command line.
@@ -410,7 +430,7 @@ jobs:
           echo "DEPS=$DEPS ./psycopg_c" >> $GITHUB_ENV
 
       - name: Install Python packages
-        run: pip install $DEPS
+        run: uv pip install --system $DEPS
 
       - name: Run tests
         run: ./tools/ci/ci_test.sh
