@@ -65,7 +65,6 @@ jobs:
 
     env:
       PSYCOPG_IMPL: ${{ matrix.impl }}
-      DEPS: ./psycopg[test] ./psycopg_pool
       PSYCOPG_TEST_DSN: "host=127.0.0.1 user=postgres password=password"
       MARKERS: ""
 
@@ -93,32 +92,37 @@ jobs:
       - name: Install the wanted libpq version
         run: sudo ./tools/ci/ci_install_libpq.sh ${{ matrix.libpq }}
 
-      - name: Include psycopg-c to the packages to install
+      - name: Configure uv dependency groups
+        run: |
+          echo "UV_SYNC_ARGS=--no-default-groups --group test" >> $GITHUB_ENV
+
+      - name: Include psycopg-c dependency group
         if: ${{ matrix.impl == 'c' }}
         run: |
-          echo "DEPS=$DEPS ./psycopg_c" >> $GITHUB_ENV
+          echo "UV_SYNC_ARGS=$UV_SYNC_ARGS --group c" >> $GITHUB_ENV
 
-      - name: Include gevent to the packages to install
+      - name: Include gevent dependency group
         if: ${{ matrix.ext == 'gevent' }}
         run: |
-          echo "DEPS=$DEPS gevent" >> $GITHUB_ENV
+          echo "UV_SYNC_ARGS=$UV_SYNC_ARGS --group gevent" >> $GITHUB_ENV
           echo "MARKERS=$MARKERS gevent" >> $GITHUB_ENV
 
-      - name: Include dnspython to the packages to install
+      - name: Include dnspython dependency group
         if: ${{ matrix.ext == 'dns' }}
         run: |
-          echo "DEPS=$DEPS dnspython" >> $GITHUB_ENV
+          echo "UV_SYNC_ARGS=$UV_SYNC_ARGS --group dns" >> $GITHUB_ENV
           echo "MARKERS=$MARKERS dns" >> $GITHUB_ENV
 
-      - name: Include shapely to the packages to install
+      - name: Include shapely dependency group
         if: ${{ matrix.ext == 'postgis' }}
         run: |
-          echo "DEPS=$DEPS shapely" >> $GITHUB_ENV
+          echo "UV_SYNC_ARGS=$UV_SYNC_ARGS --group postgis" >> $GITHUB_ENV
           echo "MARKERS=$MARKERS postgis" >> $GITHUB_ENV
 
-      - if: ${{ matrix.ext == 'numpy' }}
+      - name: Include numpy dependency group
+        if: ${{ matrix.ext == 'numpy' }}
         run: |
-          echo "DEPS=$DEPS numpy" >> $GITHUB_ENV
+          echo "UV_SYNC_ARGS=$UV_SYNC_ARGS --group numpy" >> $GITHUB_ENV
           echo "MARKERS=$MARKERS numpy" >> $GITHUB_ENV
 
       - name: Exclude certain tests from pypy
@@ -126,12 +130,11 @@ jobs:
         run: |
           echo "NOT_MARKERS=$NOT_MARKERS timing mypy" >> $GITHUB_ENV
 
-      - name: Configure to use the oldest dependencies
+      - name: Configure minimum dependency group
         if: ${{ matrix.ext == 'min' }}
         run: |
-          echo "DEPS=$DEPS dnspython shapely numpy gevent" >> $GITHUB_ENV
-          echo "UV_CONSTRAINT=${{ github.workspace }}/tests/constraints.txt" \
-            >> $GITHUB_ENV
+          echo "DEPS=./psycopg[test] ./psycopg_pool ./psycopg_c dnspython shapely numpy gevent" >> $GITHUB_ENV
+          echo "UV_CONSTRAINT=${{ github.workspace }}/tests/constraints.txt" >> $GITHUB_ENV
 
       - name: Configure memory alignment tests
         if: ${{ matrix.ext == 'align' }}
@@ -142,9 +145,19 @@ jobs:
           echo "PYTEST_ADDOPTS=-v" >> $GITHUB_ENV
 
       - name: Install Python packages
+        if: ${{ matrix.ext != 'min' }}
+        run: uv sync --locked $UV_SYNC_ARGS
+
+      - name: Install minimum-version Python packages
+        if: ${{ matrix.ext == 'min' }}
         run: uv pip install --system $DEPS
 
       - name: Run tests
+        if: ${{ matrix.ext != 'min' }}
+        run: uv run ./tools/ci/ci_test.sh
+
+      - name: Run minimum-version tests
+        if: ${{ matrix.ext == 'min' }}
         run: ./tools/ci/ci_test.sh
 
 
@@ -217,7 +230,6 @@ jobs:
 
     env:
       PSYCOPG_IMPL: ${{ matrix.impl }}
-      DEPS: ./psycopg[test] ./psycopg_pool
       PSYCOPG_TEST_DSN: "host=127.0.0.1 user=runner dbname=postgres"
       # MacOS on GitHub Actions seems particularly slow.
       # Don't run timing-based tests as they regularly fail.
@@ -252,17 +264,21 @@ jobs:
           echo "DYLD_LIBRARY_PATH=/opt/homebrew/opt/postgresql@${PG_VERSION}/lib/postgresql:/opt/homebrew/opt/postgresql@${PG_VERSION}/lib:$DYLD_LIBRARY_PATH" \
               >> $GITHUB_ENV
 
-      - name: Include psycopg-c to the packages to install
+      - name: Configure uv dependency groups
+        run: |
+          echo "UV_SYNC_ARGS=--no-default-groups --group test" >> $GITHUB_ENV
+
+      - name: Include psycopg-c dependency group
         if: ${{ matrix.impl == 'c' }}
         run: |
-          echo "DEPS=$DEPS ./psycopg_c" >> $GITHUB_ENV
+          echo "UV_SYNC_ARGS=$UV_SYNC_ARGS --group c" >> $GITHUB_ENV
           echo "PATH=/opt/homebrew/opt/postgresql@${PG_VERSION}/bin:$PATH" >> $GITHUB_ENV
 
       - name: Install Python packages
-        run: uv pip install --system $DEPS
+        run: uv sync --locked $UV_SYNC_ARGS
 
       - name: Run tests
-        run: ./tools/ci/ci_test.sh
+        run: uv run ./tools/ci/ci_test.sh
 
 
   # }}}
@@ -389,7 +405,6 @@ jobs:
 
     env:
       PSYCOPG_IMPL: ${{ matrix.impl }}
-      DEPS: ./psycopg[test] ./psycopg_pool
       PSYCOPG_TEST_DSN: "host=127.0.0.1 port=26257 user=root dbname=defaultdb"
       CRDB_REPO: us-docker.pkg.dev/cockroach-cloud-images/cockroachdb/cockroach
       # Since CRDB 25.1, 'on' should become the default, which will break
@@ -424,16 +439,20 @@ jobs:
       - name: Install the wanted libpq version
         run: sudo ./tools/ci/ci_install_libpq.sh ${{ matrix.libpq }}
 
-      - name: Include psycopg-c to the packages to install
+      - name: Configure uv dependency groups
+        run: |
+          echo "UV_SYNC_ARGS=--no-default-groups --group test" >> $GITHUB_ENV
+
+      - name: Include psycopg-c dependency group
         if: ${{ matrix.impl == 'c' }}
         run: |
-          echo "DEPS=$DEPS ./psycopg_c" >> $GITHUB_ENV
+          echo "UV_SYNC_ARGS=$UV_SYNC_ARGS --group c" >> $GITHUB_ENV
 
       - name: Install Python packages
-        run: uv pip install --system $DEPS
+        run: uv sync --locked $UV_SYNC_ARGS
 
       - name: Run tests
-        run: ./tools/ci/ci_test.sh
+        run: uv run ./tools/ci/ci_test.sh
 
 
   # }}}

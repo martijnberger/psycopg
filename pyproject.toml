@@ -1,11 +1,11 @@
 [project]
 name = "psycopg-dev"
 version = "0"
+description = "Development workspace for the Psycopg repository"
 requires-python = ">=3.10"
 dependencies = [
     "psycopg",
     "psycopg-pool",
-    "isort-psycopg",
 ]
 
 [build-system]
@@ -18,39 +18,40 @@ dev = [
     { include-group = "lint" },
 ]
 test = [
-    "anyio >= 4.0",
-    "mypy >= 1.19.0; implementation_name != 'pypy'",
-    "pproxy >= 2.7",
-    "pytest >= 6.2.5",
-    "pytest-cov >= 3.0",
-    "pytest-randomly >= 3.5",
+    "psycopg[test]",
+    "psycopg-pool[test]",
 ]
 lint = [
-    "ast-comments >= 1.1.2",
-    "black >= 26.1.0",
-    "codespell >= 2.2",
-    "cython-lint >= 0.16",
-    "dnspython >= 2.1",
-    "flake8 >= 4.0",
-    "isort[colors] >= 6.0",
-    "pre-commit >= 4.0.1",
-    "types-setuptools >= 57.4",
-    "types-shapely >= 2.0",
-    "wheel >= 0.37",
+    "psycopg[dev]",
 ]
 docs = [
-    "Sphinx >= 5.0",
-    "furo == 2022.6.21",
-    "sphinx-autobuild >= 2021.3.14",
-    "sphinx-autodoc-typehints >= 1.12",
+    "psycopg[docs]",
 ]
 c = [
     "psycopg-c",
+]
+dns = [
+    "dnspython >= 2.1",
+]
+gevent = [
+    "gevent",
+]
+numpy = [
+    "numpy",
+]
+postgis = [
+    "shapely",
+]
+sqlalchemy = [
+    "greenlet",
+    "pytest >= 6.2.5",
+    "pytest-xdist",
 ]
 
 [tool.uv]
 package = false
 default-groups = ["dev"]
+resolution = "highest"
 
 [tool.uv.sources]
 psycopg = { path = "psycopg", editable = true }
