@@ -15,7 +15,12 @@ repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # runner imported them directly from the current working directory. Adjust
 # `sys.path` before importing pytest so the inner source trees take precedence
 # without changing into `tests/`, which would make `tests/types` shadow the
-# standard library `types` module on Windows.
+# standard library `types` module on Windows. Also export the same source-tree
+# paths for subprocesses spawned by the test suite, and use `PYTHONSAFEPATH`
+# so child interpreters don't prepend the repository root back onto `sys.path`.
+export PYTHONPATH="$repo_root/psycopg:$repo_root/psycopg_pool${PYTHONPATH:+:$PYTHONPATH}"
+export PYTHONSAFEPATH=1
+
 pytest_runner='
 import os
 import sys
@@ -26,7 +31,6 @@ source_paths = [
     os.path.join(repo_root, "psycopg_pool"),
 ]
 blocked_paths = {
-    "",
     repo_root,
     os.path.join(repo_root, "tests"),
 }
