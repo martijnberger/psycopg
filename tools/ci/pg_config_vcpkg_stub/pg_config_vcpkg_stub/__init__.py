@@ -40,9 +40,19 @@ def _main() -> None:
         print(vcpkg_platform_root.joinpath("lib"))
 
     elif args.includedir:
-        if not (d := vcpkg_platform_root / "include/libpq").is_dir():
-            raise ScriptError(f"libpq include directory not found: {d}")
-        print(vcpkg_platform_root.joinpath("include"))
+        candidates = [
+            vcpkg_platform_root / "include",
+            vcpkg_platform_root / "include/libpq",
+        ]
+        for d in candidates:
+            if (d / "libpq-fe.h").exists():
+                print(d)
+                break
+        else:
+            raise ScriptError(
+                "libpq include directory not found in any of: "
+                + ", ".join(str(d) for d in candidates)
+            )
 
     else:
         raise ScriptError("command not handled")
