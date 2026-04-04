@@ -10,12 +10,32 @@ set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
-# Run from the tests directory and point Python at the inner source trees.
-# The repository root also contains packaging directories named `psycopg`
-# and `psycopg_pool`, which Python would otherwise import as namespace
-# packages before the actual project code.
-export PYTHONPATH="$repo_root/psycopg:$repo_root/psycopg_pool${PYTHONPATH:+:$PYTHONPATH}"
-cd "$repo_root/tests"
+# The repository root contains packaging directories named `psycopg` and
+# `psycopg_pool`, which would shadow the actual project packages if the test
+# runner imported them directly from the current working directory. Adjust
+# `sys.path` before importing pytest so the inner source trees take precedence
+# without changing into `tests/`, which would make `tests/types` shadow the
+# standard library `types` module on Windows.
+pytest_runner='
+import os
+import sys
+
+repo_root = os.path.abspath(sys.argv[1])
+source_paths = [
+    os.path.join(repo_root, "psycopg"),
+    os.path.join(repo_root, "psycopg_pool"),
+]
+blocked_paths = {
+    "",
+    repo_root,
+    os.path.join(repo_root, "tests"),
+}
+sys.path[:] = source_paths + [p for p in sys.path if os.path.abspath(p or os.curdir) not in blocked_paths]
+
+import pytest
+
+raise SystemExit(pytest.main(sys.argv[2:]))
+'
 
 # Assemble a markers expression from the MARKERS and NOT_MARKERS env vars
 markers=""
@@ -28,10 +48,10 @@ for m in ${NOT_MARKERS:-}; do
     markers="$markers not $m"
 done
 
-pytest="python -bb -m pytest --color=yes"
+pytest=(python -bb -c "$pytest_runner" "$repo_root" --color=yes)
 
-$pytest -m "$markers" "$@" && exit 0
+"${pytest[@]}" -m "$markers" "$@" && exit 0
 
-$pytest -m "$markers" --lf --randomly-seed=last "$@" && exit 0
+"${pytest[@]}" -m "$markers" --lf --randomly-seed=last "$@" && exit 0
 
-$pytest -m "$markers" --lf --randomly-seed=last "$@"
+"${pytest[@]}" -m "$markers" --lf --randomly-seed=last "$@"
